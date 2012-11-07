@@ -1,4 +1,5 @@
 // It is the project entry. form CPAPA p.63 CN.ver
+//[:syn on] [:set nu] [:set cindent]
 using System;
 using System.IO;// it is need to read & write a file p17
 public class WordCountEntry
@@ -90,16 +91,29 @@ public class WordCount
 		Console.WriteLine( "!!! WordCount.countWords() " );
 	}
 	
-		
+	//1.6 Formatting Output 01-p19 N.01061901
+	//writing to the console indicate the line number and the length in characters	
 	private void readFiles()
 	{
 		Console.WriteLine( "!!! WordCount.readFiles() " );
 		//read freader that is a StramReader p18
 		string text_line;
+		int line_cnt = 1; //N.01061901
+		
 		while (( text_line = freader.ReadLine() ) != null )
 		{
+			//dont format empty lines
+			if ( text_line.Length == 0 )
+			{
+				Console.WriteLine();
+				continue;
+			}//N.01061901
 			//write to output file
 			fwriter.WriteLine ( text_line );
+			//format output to console;
+			Console.WriteLine ( "{0} ({2}): {1}", line_cnt++, text_line, text_line.Length );
+			//N.01061901
+			//hjkl HML Y pP
 		}
 		//must explicitly close the readers
 		freader.Close();
