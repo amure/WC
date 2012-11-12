@@ -83,6 +83,7 @@ public class WordCount
 		openFiles( theFile );
 		readFiles();
 		countWords();
+		getConsoleInput();
 		writeWords();
 	}
 
@@ -93,13 +94,19 @@ public class WordCount
 	
 	//1.6 Formatting Output 01-p19 N.01061901
 	//writing to the console indicate the line number and the length in characters	
+	//N.01072101 split()
+	//use the split() method of string
 	private void readFiles()
 	{
 		Console.WriteLine( "!!! WordCount.readFiles() " );
 		//read freader that is a StramReader p18
 		string text_line;
-		int line_cnt = 1; //N.01061901
-		
+		int line_cnt = 1; 	//N.01061901
+		string [] text_words;	//N.01072101
+		char [] separators = {
+			' ', '\n', '\t',	//white space
+			'.', '\"', ';', ',', '?', '!', ')', '(', '<', '>', '[', ']'
+		};			//N.01072101
 		while (( text_line = freader.ReadLine() ) != null )
 		{
 			//dont format empty lines
@@ -114,6 +121,12 @@ public class WordCount
 			Console.WriteLine ( "{0} ({2}): {1}", line_cnt++, text_line, text_line.Length );
 			//N.01061901
 			//hjkl HML Y pP
+			//N.01072101
+			text_words = text_line.Split( separators );//it was not a good method that use null
+			/*foreach ( string option in text_words)
+			{
+				Console.WriteLine( option );
+			}*/
 		}
 		//must explicitly close the readers
 		freader.Close();
@@ -138,5 +151,24 @@ public class WordCount
 	private void writeWords()
 	{
 		Console.WriteLine( "!!! WordCount.writeWords() " );
+	}
+
+	//N.010801 P24
+	//get string from Console INput
+	private int getConsoleInput()
+	{
+		string 	user_name;
+		int 	num_tries = 0;
+		const int max_tries = 4;
+
+		do
+		{
+			//generate user message ...
+			++num_tries;
+			user_name = Console.ReadLine();
+			//test whether entry is valid
+		}while ( num_tries < max_tries );
+		Console.WriteLine ( "hello, {0}", user_name );
+		return 0;
 	}
 }
