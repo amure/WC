@@ -2,6 +2,7 @@
 //[:syn on] [:set nu] [:set cindent]
 using System;
 using System.IO;// it is need to read & write a file p17
+using System.Collections;//N.011301
 public class WordCountEntry
 {
 	static public void Main( string [] args)
@@ -51,7 +52,6 @@ public class WordCountEntry
 			Console.WriteLine( "spyOn = false" );
 		//}
 
-
 		WordCount theObj = new WordCount();
 		//transmit filename into processFile
 		//theObj.processFile();这里选择传递给这个函数，传递给构造函数的等到了后面在考虑
@@ -83,7 +83,7 @@ public class WordCount
 		openFiles( theFile );
 		readFiles();
 		countWords();
-		getConsoleInput();
+		getConsoleInput();	//N.010801 P24
 		writeWords();
 	}
 
@@ -96,6 +96,13 @@ public class WordCount
 	//writing to the console indicate the line number and the length in characters	
 	//N.01072101 split()
 	//use the split() method of string
+	//N.011301 P33
+	//use ArrayList Collection Class
+	//N.011302 P34
+	//use ArrayList.Capacity
+	//本来输入多少，输出多少到文件比较无聊，现在记录A.c的增长比较有意思
+	//N.011501 p39
+	//use jagged array for save the every words of every line
 	private void readFiles()
 	{
 		Console.WriteLine( "!!! WordCount.readFiles() " );
@@ -107,6 +114,8 @@ public class WordCount
 			' ', '\n', '\t',	//white space
 			'.', '\"', ';', ',', '?', '!', ')', '(', '<', '>', '[', ']'
 		};			//N.01072101
+		ArrayList text = new ArrayList();	//N.011301
+		string [][] sentences;	//N.011501
 		while (( text_line = freader.ReadLine() ) != null )
 		{
 			//dont format empty lines
@@ -116,7 +125,7 @@ public class WordCount
 				continue;
 			}//N.01061901
 			//write to output file
-			fwriter.WriteLine ( text_line );
+			//fwriter.WriteLine ( text_line );//N.011302
 			//format output to console;
 			Console.WriteLine ( "{0} ({2}): {1}", line_cnt++, text_line, text_line.Length );
 			//N.01061901
@@ -127,11 +136,37 @@ public class WordCount
 			{
 				Console.WriteLine( option );
 			}*/
+			//insert the line at the back of the container P33
+			text.Add( text_line );	//N.011301
+			fwriter.WriteLine( text.Capacity );	//N.011302
+		}
+		//N.011302 trimtosize for arraylist
+		text.TrimToSize();
+		fwriter.WriteLine( text.Capacity );	//N.011302
+		//N.011501
+		sentences = new string [ text.Count ][];
+		int ix = 0;
+		foreach ( string str in text )
+		{
+			sentences[ ix ] = str.Split( separators );
+			++ix;
+		}
+		//returns length of first dimension ...
+		int dim1_length = sentences.GetLength( 0 );
+		Console.WriteLine( "There are {0} arrays stored in sentences", dim1_length );
+		for ( ix = 0; ix < dim1_length; ++ix )
+		{
+			Console.WriteLine( "There are {0} words in array {1}", sentences[ ix ].Length, ix+1 );
+			foreach ( string s in sentences[ ix ] )
+				Console.Write( "{0}", s );
+			Console.WriteLine();
 		}
 		//must explicitly close the readers
 		freader.Close();
 		fwriter.Close();
 		//end in p18
+		//let's see how many we actually assed ... P33
+		Console.WriteLine( "We inserted {0} lines", text.Count );//N.011301
 	}
 	
 	private void openFiles(string theFile)//accept a filename from pF
@@ -168,7 +203,7 @@ public class WordCount
 			user_name = Console.ReadLine();
 			//test whether entry is valid
 		}while ( num_tries < max_tries );
-		Console.WriteLine ( "hello, {0}", user_name );
+		Console.WriteLine ( "hello, {0}", user_name );//print the fouth line input
 		return 0;
 	}
 }
