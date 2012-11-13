@@ -109,6 +109,8 @@ public class WordCount
 	//keeping track of trivial words with " Hashtable common_words "
 	//N.011603 p42
 	//print out the occurence count of the words to the output file in dictionary order
+	//N.011604 p51e
+	//place words.key in a sortable container, use Sort()
 	private void readFiles()
 	{
 		Console.WriteLine( "!!! WordCount.readFiles() " );
@@ -192,6 +194,11 @@ public class WordCount
 		//N.011603
 		foreach ( DictionaryEntry de in words )
 			fwriter.WriteLine( "{0} : {1}", de.Key, de.Value );
+		//N.011604
+		ArrayList aKeys = new ArrayList( words.Keys );
+		aKeys.Sort();
+		foreach( string key in aKeys )
+			fwriter.WriteLine( "{0} :: {1}", key, words[ key ]);
 		//must explicitly close the readers
 		freader.Close();
 		fwriter.Close();
