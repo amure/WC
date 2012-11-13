@@ -103,6 +103,12 @@ public class WordCount
 	//本来输入多少，输出多少到文件比较无聊，现在记录A.c的增长比较有意思
 	//N.011501 p39
 	//use jagged array for save the every words of every line
+	//N.011601 p41
+	//use Hashtable to hold the occurrence count of tht individual words
+	//N.011602 p42
+	//keeping track of trivial words with " Hashtable common_words "
+	//N.011603 p42
+	//print out the occurence count of the words to the output file in dictionary order
 	private void readFiles()
 	{
 		Console.WriteLine( "!!! WordCount.readFiles() " );
@@ -116,6 +122,12 @@ public class WordCount
 		};			//N.01072101
 		ArrayList text = new ArrayList();	//N.011301
 		string [][] sentences;	//N.011501
+		Hashtable words = new Hashtable();	//N.011601
+		Hashtable common_words = new Hashtable();	//N.011602
+		common_words.Add( "the", 0 );
+		common_words.Add( "but", 0 );
+		//...这样子加的方法只能作为一个示例，实际操作需要把这些单词放在一个文件里，然后读取出来
+		common_words.Add( "and", 0 );
 		while (( text_line = freader.ReadLine() ) != null )
 		{
 			//dont format empty lines
@@ -158,9 +170,28 @@ public class WordCount
 		{
 			Console.WriteLine( "There are {0} words in array {1}", sentences[ ix ].Length, ix+1 );
 			foreach ( string s in sentences[ ix ] )
+			{
 				Console.Write( "{0}", s );
+
+				//N.011601
+				// normalize each word to lowercase
+				string key = s.ToLower();
+				//N.011602 common_words
+				if ( common_words.Contains( key ))
+					continue;
+				// is the word currentli in Hashtable?
+				// if not, then we add it ...
+				if ( ! words.Contains( key ))
+					words.Add( key, 1 );
+				// otherwise, we increment the count
+				else
+					words[ key ] = (int) words[ key ] + 1;
+			}
 			Console.WriteLine();
 		}
+		//N.011603
+		foreach ( DictionaryEntry de in words )
+			fwriter.WriteLine( "{0} : {1}", de.Key, de.Value );
 		//must explicitly close the readers
 		freader.Close();
 		fwriter.Close();
