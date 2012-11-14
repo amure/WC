@@ -1,5 +1,15 @@
-// It is the project entry. form CPAPA p.63 CN.ver
-//[:syn on] [:set nu] [:set cindent]
+/*WC, C#编程练习代码，源代码来自于C#Primer中文版的一二章片段
+  1、1.17开始框架更加清晰，需要一次更大的改动，改变写有函数功能区块，譬如openFile();
+  2、现有代码注释过于很乱，已经有碍于阅读代码；
+  3、现在开始的版本姑且叫做练习二版；
+  end*/
+/*Ver.2
+  1、清理注释，参数说明用单行，函数体外用说明用双引注释
+  2、实现openFile函数的异常处理功能,N.0117
+  3、修改readfile函数架构，多余模块移入countWord，p46
+  4、补充WC class数据成员，N.0203 p67
+  5、使用property设置m_file_output,p68~69，N.0204
+  end for Ver.2*/
 using System;
 using System.IO;// it is need to read & write a file p17
 using System.Collections;//N.011301
@@ -10,20 +20,16 @@ public class WordCountEntry
 		bool traceOn = false; //There is a code block about foreach in P14
 		bool spyOn = false;
 		string file_name = null; //code from p17 
+		string defaultfile = @"wordCount.txt";//N.0204
 		
 		Console.WriteLine("Beginning WordCount program ... ");
 
-		//程序首先添加接受参数的功能，参见12页
+		//程序参数判断块
 		if (args.Length == 0 )
 		{
-			display_usage();//This function code is in P18.
+			display_usage();
 			return;
-		}else{	//There is a code block about foreach in P14
-			//bool traceOn = false;
-			//bool spyOn = false;
-			//写这个区块应该是明显错了，事实上，上面两个布尔量也最好不写在这里
-			//string file_name = null; //code from p17
-
+		}else{	
 			foreach ( string option in args )
 			{
 				if ( option.Equals ( "-t" ))
@@ -35,13 +41,12 @@ public class WordCountEntry
 				else
 				{
 					Console.WriteLine( @"check_valid_file_type( option );" );
-					file_name = option;//transmit filename string into file_name
+					file_name = option;
 				}
 				
 			}
 		}
-		//} this is error if there is a }
-		//i want to read traceOn & spyON
+		/*这个功能模块判断输入序列中的-t，-s开关，调试用
 		if ( traceOn ) 
 			Console.WriteLine( "traceOn = true" );
 		else
@@ -50,13 +55,18 @@ public class WordCountEntry
 			Console.WriteLine( "spyOn = true" );
 		else
 			Console.WriteLine( "spyOn = false" );
-		//}
+		*/	
 
-		WordCount theObj = new WordCount();
 		//transmit filename into processFile
 		//theObj.processFile();这里选择传递给这个函数，传递给构造函数的等到了后面在考虑
-		//现在这个方式比较简单
-		theObj.processFile( file_name );
+		//现在这个方式比较简单，下一个版本中使用构造函数
+		/* 	WordCount theObj = new WordCount();
+			theObj.processFile( file_name );	*/
+		WordCount theObj = new WordCount( file_name, spyOn, traceOn );
+		//N.0204
+		if ( theObj.OutFile == null )
+			theObj.OutFile = defaultfile;
+		theObj.processFile( );
 
 		Console.WriteLine( "Ending WordCount program ... ");
 	}
@@ -76,20 +86,104 @@ public class WordCountEntry
 
 public class WordCount
 {
-	StreamReader freader = null;
-	StreamWriter fwriter = null;
-	public void processFile(string theFile)//accept a filename from WCE
+	//p.67
+	private bool 		m_spy;
+	private bool 		m_trace;
+	
+	private string		m_file_name;
+	private string		m_file_output;
+	
+	private StreamReader	m_reader;
+	private StreamWriter	m_writer;
+
+	private ArrayList	m_text;
+	private Hashtable	m_words;
+	
+	private string[][]	m_sentences;
+	static private char [] 	ms_separators = new char []
+	{ ' ', '\n', '\t', '.', '\"', ';', ',', '?', '!', 
+		')', '(', '<', '>', '[', ']' };			//N.01072101
+	//N.0204
+	public string OutFile
 	{
-		openFiles( theFile );
+		get{ return m_file_output; }
+		set
+		{
+			if ( value.Length != 0 )
+				m_file_output = value;
+		}
+	}
+	
+	//p.74~75
+	//在没有设计trace模块前，traceFlags使用bool型替换
+	public WordCount( string file_name )
+		: this( file_name, false, false ) {}
+
+	public WordCount( string file_name, bool spy, bool trace )
+	{
+		m_file_name = file_name;
+		m_spy = spy;
+		m_trace = trace;
+
+		if ( m_spy )
+			Console.WriteLine( @"m_times = new ArrayList()");
+
+		m_text = new ArrayList();
+		m_words = new Hashtable();
+	}
+	
+	public void processFile()
+	{
+		//m_reader = openFiles( m_file_name );
 		readFiles();
 		countWords();
-		getConsoleInput();	//N.010801 P24
 		writeWords();
 	}
 
 	private void countWords()
 	{
 		Console.WriteLine( "!!! WordCount.countWords() " );
+		
+		Hashtable common_words = new Hashtable();	//N.011602
+		common_words.Add( "the", 0 );
+		common_words.Add( "but", 0 );
+		//...这样子加的方法只能作为一个示例，实际操作需要把这些单词放在一个文件里，然后读取出来
+		common_words.Add( "and", 0 );
+		
+		//将text拆成单词，放入sentences这个 jagged array
+		//N.011501
+		m_sentences = new string [ m_text.Count ][];
+		int ix = 0;
+		foreach ( string str in m_text )
+		{
+			m_sentences[ ix ] = str.Split( ms_separators );
+			++ix;
+		}
+		//统计单词，使用的是hashtable words
+		int dim1_length = m_sentences.GetLength( 0 ); //returns length of first dimension ...
+		Console.WriteLine( "There are {0} arrays stored in sentences", dim1_length );
+		for ( ix = 0; ix < dim1_length; ++ix )
+		{
+			Console.WriteLine( "There are {0} words in array {1}", m_sentences[ ix ].Length, ix+1 );
+			foreach ( string s in m_sentences[ ix ] )
+			{
+				Console.Write( "{0}", s );
+
+				//N.011601
+				string key = s.ToLower(); // normalize each word to lowercase
+				//N.011602 common_words
+				if ( common_words.Contains( key ))
+					continue;
+				// is the word currently in Hashtable?
+				// if not, then we add it ...
+				// otherwise, we increment the count
+				if ( ! m_words.Contains( key ))
+					m_words.Add( key, 1 );
+				else
+					m_words[ key ] = (int) m_words[ key ] + 1;
+			}
+			Console.WriteLine();
+		}
 	}
 	
 	//1.6 Formatting Output 01-p19 N.01061901
@@ -114,120 +208,102 @@ public class WordCount
 	private void readFiles()
 	{
 		Console.WriteLine( "!!! WordCount.readFiles() " );
-		//read freader that is a StramReader p18
-		string text_line;
-		int line_cnt = 1; 	//N.01061901
-		string [] text_words;	//N.01072101
-		char [] separators = {
-			' ', '\n', '\t',	//white space
-			'.', '\"', ';', ',', '?', '!', ')', '(', '<', '>', '[', ']'
-		};			//N.01072101
-		ArrayList text = new ArrayList();	//N.011301
-		string [][] sentences;	//N.011501
-		Hashtable words = new Hashtable();	//N.011601
-		Hashtable common_words = new Hashtable();	//N.011602
-		common_words.Add( "the", 0 );
-		common_words.Add( "but", 0 );
-		//...这样子加的方法只能作为一个示例，实际操作需要把这些单词放在一个文件里，然后读取出来
-		common_words.Add( "and", 0 );
-		while (( text_line = freader.ReadLine() ) != null )
-		{
-			//dont format empty lines
-			if ( text_line.Length == 0 )
-			{
-				Console.WriteLine();
-				continue;
-			}//N.01061901
-			//write to output file
-			//fwriter.WriteLine ( text_line );//N.011302
-			//format output to console;
-			Console.WriteLine ( "{0} ({2}): {1}", line_cnt++, text_line, text_line.Length );
-			//N.01061901
-			//hjkl HML Y pP
-			//N.01072101
-			text_words = text_line.Split( separators );//it was not a good method that use null
-			/*foreach ( string option in text_words)
-			{
-				Console.WriteLine( option );
-			}*/
-			//insert the line at the back of the container P33
-			text.Add( text_line );	//N.011301
-			fwriter.WriteLine( text.Capacity );	//N.011302
-		}
-		//N.011302 trimtosize for arraylist
-		text.TrimToSize();
-		fwriter.WriteLine( text.Capacity );	//N.011302
-		//N.011501
-		sentences = new string [ text.Count ][];
-		int ix = 0;
-		foreach ( string str in text )
-		{
-			sentences[ ix ] = str.Split( separators );
-			++ix;
-		}
-		//returns length of first dimension ...
-		int dim1_length = sentences.GetLength( 0 );
-		Console.WriteLine( "There are {0} arrays stored in sentences", dim1_length );
-		for ( ix = 0; ix < dim1_length; ++ix )
-		{
-			Console.WriteLine( "There are {0} words in array {1}", sentences[ ix ].Length, ix+1 );
-			foreach ( string s in sentences[ ix ] )
-			{
-				Console.Write( "{0}", s );
 
-				//N.011601
-				// normalize each word to lowercase
-				string key = s.ToLower();
-				//N.011602 common_words
-				if ( common_words.Contains( key ))
+		try
+		{ 
+			string text_line; 
+			m_reader = openFiles( m_file_name );
+		
+			//读取文件中的每一行放入text这个ArrayList中
+			while (( text_line = m_reader.ReadLine() ) != null )
+			{
+				//忽略空行 
+				if ( text_line.Length == 0 )
 					continue;
-				// is the word currentli in Hashtable?
-				// if not, then we add it ...
-				if ( ! words.Contains( key ))
-					words.Add( key, 1 );
-				// otherwise, we increment the count
-				else
-					words[ key ] = (int) words[ key ] + 1;
+				m_text.Add( text_line );	//N.011301
 			}
-			Console.WriteLine();
+			m_text.TrimToSize(); //N.011302 trimtosize for arraylist
+			m_reader.Close();
 		}
-		//N.011603
-		foreach ( DictionaryEntry de in words )
-			fwriter.WriteLine( "{0} : {1}", de.Key, de.Value );
-		//N.011604
-		ArrayList aKeys = new ArrayList( words.Keys );
-		aKeys.Sort();
-		foreach( string key in aKeys )
-			fwriter.WriteLine( "{0} :: {1}", key, words[ key ]);
-		//must explicitly close the readers
-		freader.Close();
-		fwriter.Close();
-		//end in p18
-		//let's see how many we actually assed ... P33
-		Console.WriteLine( "We inserted {0} lines", text.Count );//N.011301
+		catch ( IOException ioe )
+		{
+			Console.WriteLine ( ioe.ToString() );
+		}
+		catch ( ArgumentNullException ane )
+		{
+			Console.WriteLine ( ane.ToString() );
+		}
+		catch ( ArgumentException ae )
+		{
+			Console.WriteLine ( ae.ToString() );
+		}
+		catch ( Exception e )
+		{
+			Console.WriteLine ( e.ToString() );
+		}
+
+		finally
+		{
+			Console.WriteLine ( "Finally!" );
+		}
 	}
 	
-	private void openFiles(string theFile)//accept a filename from pF
+	/*N.0117 the Exception Handling of openFile()
+	  code in p44~45
+	  end of N.0117*/
+	private StreamReader openFiles( string file_name )
 	{
 		Console.WriteLine( "!!! WordCount.openFiles() " );
 
-		//copy code from p17
-		//StreamReader freader = File.OpenText ( file_name );
-		freader = File.OpenText ( theFile ); 
-		//StreamWriter fwriter = File.CreateText ( "wc.diag" );
-		fwriter = File.CreateText ( "wc.diag" );
-		
-		//这两个数据成员最简单的就是传递给readFiles，在rF里先实现p18，19里最简单的基础操作
-		//先不知用后面教授的方法，就在当前结构下，最简单的解决方法，就是提升freader&fw的访问级别
+		//判断文件名字符串是否存在
+		if ( file_name == null )
+			throw new ArgumentNullException();
+		//判断文件是否存在
+		if ( !File.Exists( file_name ))
+		{
+			string msg = "Invalid file name: " + file_name;
+			throw new ArgumentException( msg );
+		}
+		//判断文件名是否以txt作为扩展名
+		if ( !file_name.EndsWith( ".txt" ))
+		{
+			string msg = "Sorry. ";
+			string ext = Path.GetExtension( file_name );
+
+			if ( ext != String.Empty )
+				msg += "We currently do not support " + 
+					ext + "files.";
+
+			msg = "\nCurrently we only support .txt files.";
+			throw new Exception( msg );
+		}
+		return File.OpenText( file_name );
 	}
 	
 	private void writeWords()
 	{
 		Console.WriteLine( "!!! WordCount.writeWords() " );
+		
+		m_writer = File.CreateText( m_file_output );
+		//对words进行排序 N.011603
+		foreach ( DictionaryEntry de in m_words )
+			m_writer.WriteLine( "{0} : {1}", de.Key, de.Value );
+		//N.011604
+		ArrayList aKeys = new ArrayList( m_words.Keys );
+		aKeys.Sort();
+		foreach( string key in aKeys )
+			m_writer.WriteLine( "{0} :: {1}", key, m_words[ key ]);
+		m_writer.Close();
+
+		Console.WriteLine( "We inserted {0} lines", m_text.Count );//N.011301
 	}
 
 	//N.010801 P24
 	//get string from Console INput
+	//这段代码本来是实验Console的输入，对于WC没有功能意义
+	//今后即使需要这一个功能也应该将其拿出WC的class使用
+	//WC class应该与console无关
+	/* getConsoleInput() start
 	private int getConsoleInput()
 	{
 		string 	user_name;
@@ -244,4 +320,5 @@ public class WordCount
 		Console.WriteLine ( "hello, {0}", user_name );//print the fouth line input
 		return 0;
 	}
+	the end of getConsoleInput()*/
 }
