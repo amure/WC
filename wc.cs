@@ -10,6 +10,10 @@
   4、补充WC class数据成员，N.0203 p67
   5、使用property设置m_file_output,p68~69，N.0204
   end for Ver.2*/
+/*Ver 2.1
+1、使用Indexers访问wordcount里的Hashtable m_words N.20501 p70
+2、更改N.010801代码，使其访问wordcount的indexers
+*/
 using System;
 using System.IO;// it is need to read & write a file p17
 using System.Collections;//N.011301
@@ -68,6 +72,11 @@ public class WordCountEntry
 			theObj.OutFile = defaultfile;
 		theObj.processFile( );
 
+		//N.20501 
+		//使用getConsoleInput函数实现WC之index的调用
+		if ( getConsoleInput() == "q" ) return;
+		Console.WriteLine ( " {0} line(s) match: ", theObj[ getConsoleInput() ] );
+
 		Console.WriteLine( "Ending WordCount program ... ");
 	}
 
@@ -81,6 +90,31 @@ public class WordCountEntry
 			-t prints a tracce of the program
 			-h prints this message";
 		Console.WriteLine( usage );
+	}
+
+	//N.010801 P24
+	//get string from Console INput
+	//这段代码本来是实验Console的输入，对于WC没有功能意义
+	//今后即使需要这一个功能也应该将其拿出WC的class使用
+	//WC class应该与console无关
+	/* getConsoleInput() start
+	the end of getConsoleInpYut()*/
+	private static string getConsoleInput()
+	{
+		string 	user_name;
+		int 	num_tries = 0;
+		const int max_tries = -1;
+
+		Console.Write ( @"Please enter a query or 'q' to Quit: " );
+		do
+		{
+			//generate user message ...
+			++num_tries;
+			user_name = Console.ReadLine();
+			//test whether entry is valid
+		}while ( num_tries < max_tries );
+		Console.WriteLine ( user_name );
+		return user_name ;
 	}
 }
 
@@ -113,6 +147,21 @@ public class WordCount
 				m_file_output = value;
 		}
 	}
+
+	//N.20501
+	public int this[ string index ]
+	{
+		get
+		{
+			if ( index.Length == 0 )
+				throw new ArgumentException (
+						"WordCount: Empty string as index" );
+			if ( m_words == null )
+				throw new Exception(
+						"WordCount: No associated file" );
+			return (int) m_words[ index ];
+		}
+	} 
 	
 	//p.74~75
 	//在没有设计trace模块前，traceFlags使用bool型替换
@@ -298,27 +347,4 @@ public class WordCount
 		Console.WriteLine( "We inserted {0} lines", m_text.Count );//N.011301
 	}
 
-	//N.010801 P24
-	//get string from Console INput
-	//这段代码本来是实验Console的输入，对于WC没有功能意义
-	//今后即使需要这一个功能也应该将其拿出WC的class使用
-	//WC class应该与console无关
-	/* getConsoleInput() start
-	private int getConsoleInput()
-	{
-		string 	user_name;
-		int 	num_tries = 0;
-		const int max_tries = 4;
-
-		do
-		{
-			//generate user message ...
-			++num_tries;
-			user_name = Console.ReadLine();
-			//test whether entry is valid
-		}while ( num_tries < max_tries );
-		Console.WriteLine ( "hello, {0}", user_name );//print the fouth line input
-		return 0;
-	}
-	the end of getConsoleInput()*/
 }
